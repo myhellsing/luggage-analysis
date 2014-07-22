@@ -1,0 +1,36 @@
+<component name="libraryTable">
+  <library name="gdata-analytics-2.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/gdata-analytics-2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-appsforyourdomain-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-base-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-blogger-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-books-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-calendar-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-client-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-codesearch-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-contacts-3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-core-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-docs-3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-finance-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-gtt-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-health-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-maps-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-media-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-photos-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-projecthosting-2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-sidewiki-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-sites-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-spreadsheet-3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-webmastertools-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/gdata-youtube-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/guava-11.0.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/jsr305.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/mail.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/libs/jsr305.jar!/" />
+    </SOURCES>
+  </library>
+</component>
