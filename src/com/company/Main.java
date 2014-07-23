@@ -7,6 +7,8 @@ import com.google.gdata.data.batch.*;
 import com.google.gdata.data.spreadsheet.*;
 import com.google.gdata.util.*;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
@@ -14,12 +16,13 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args)   throws AuthenticationException, MalformedURLException, IOException, ServiceException {
+        BufferedReader br = new BufferedReader(new FileReader("security.txt"));
 
 
 
 	// write your code here
-        String USERNAME = "myhellsing@gmail.com";
-        String PASSWORD = "myfunnyfaye";
+        String USERNAME = br.readLine();
+        String PASSWORD = br.readLine();
 
         SpreadsheetService service =
                 new SpreadsheetService("MySpreadsheetIntegration-v1");
