@@ -3,14 +3,11 @@ package com.company;
 import com.google.gdata.client.authn.oauth.*;
 import com.google.gdata.client.spreadsheet.*;
 import com.google.gdata.data.*;
-import com.google.gdata.data.batch.*;
 import com.google.gdata.data.spreadsheet.*;
 import com.google.gdata.util.*;
+import com.google.gson.Gson;
 
-import java.io.BufferedReader;
-import java.io.Console;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.text.*;
 import java.text.ParseException;
@@ -20,74 +17,96 @@ public class Main {
 
     public static ArrayList<Expense> expenses = null;
 
-    public void fillExpense() throws AuthenticationException, MalformedURLException, IOException, ServiceException, URISyntaxException, java.text.ParseException {
-        if (expenses ==null) expenses = new ArrayList<Expense>();
+    public static SpreadsheetService service = null;
 
-        BufferedReader br = new BufferedReader(new FileReader("security.txt"));
+    public ArrayList<Expense> retrievAsList() throws IOException, ServiceException {
+        ArrayList<Expense> expenses1 = new ArrayList<Expense>();
+        setPassword();
 
-        // write your code here
-        String USERNAME = br.readLine();
-        String PASSWORD = br.readLine();
-
-        SpreadsheetService service =
-                new SpreadsheetService("MySpreadsheetIntegration-v1");
-        service.setUserCredentials(USERNAME, PASSWORD);
-
-        // TODO: Authorize the service object for a specific user (see other sections)
-
-        // Define the URL to request.  This should never change.
+        // Define the URL to request.  This should never change.  Получили объект файла Трат
         URL SPREADSHEET_FEED_URL = new URL(
-                "https://spreadsheets.google.com/feeds/worksheets/tHsrq4mO7BK-xCYKznI6IEA/private/basic");
+                "https://spreadsheets.google.com/feeds/spreadsheets/0Aoa5WkgCFdrudEhzcnE0bU83QksteENZS3puSTZJRUE");
+        SpreadsheetEntry spreadsheet = service.getEntry(SPREADSHEET_FEED_URL,SpreadsheetEntry.class);
 
 
-
-        // Make a request to the API and get all spreadsheets.
-        WorksheetFeed feed = service.getFeed(SPREADSHEET_FEED_URL, WorksheetFeed.class);
-        List<WorksheetEntry> worksheetEntries = feed.getEntries();
-
-        // Iterate through all of the spreadsheets returned
-        for (WorksheetEntry worksheetEntry : worksheetEntries) {
-            // Print the title of this spreadsheet to the screen
-            System.out.println(worksheetEntry.getTitle().getPlainText() );
-            System.out.println();
-
-
-            // Fetch the list feed of the worksheet.
-            URL cellFeedUrl = new URI(worksheetEntry.getCellFeedUrl().toString()+ "?min-row=6&min-col=1&max-col=4").toURL();
-            CellFeed cellFeed = service.getFeed(cellFeedUrl, CellFeed.class);
-
+        // Get the first worksheet of the first spreadsheet.  Получили все листы в файле Трат
+        WorksheetFeed worksheetFeed = service.getFeed(
+                spreadsheet.getWorksheetFeedUrl(), WorksheetFeed.class);
+        List<WorksheetEntry> worksheets = worksheetFeed.getEntries();
+        // пройдемся по всем месяцам
+        for (WorksheetEntry worksheet:worksheets) {
+            // Fetch the list feed of the worksheet. Получили список строк
+            URL listFeedUrl = worksheet.getListFeedUrl();
+            ListFeed listFeed = service.getFeed(listFeedUrl, ListFeed.class);
+            Date date = getDate(worksheet.getTitle().getPlainText());
+            System.out.println(date);
             // Iterate through each row, printing its cell values.
-            List<CellEntry> cells  = cellFeed.getEntries();
-
-            Date date = getDate(worksheetEntry.getTitle().getPlainText());
-            int cnt = cells.size()/3;
-            int inc = 2;
-            for (int i =0;i<cnt;i=i+inc)
-            {
-                String name  = cells.get(i).getPlainTextContent();
-                Double sum = Double.parseDouble(cells.get(i+1).getPlainTextContent()); //приход или расход
-                String category="";
-                if (cells.get(i+1).getTitle().getPlainText().contains("C")){
-                    sum=sum*(-1);
-                    if (date.after(new SimpleDateFormat("dd-MM-yy", Locale.ENGLISH).parse("01-09-2013"))){
-                        category = cells.get(i+2).getPlainTextContent();
-                        inc = 3;
+            for (ListEntry row : listFeed.getEntries()) {
+                if (needSkip(row.getCustomElements().getValue("название"))) continue;
+                // Print the first column's cell value
+                //  System.out.print(row.getTitle().getPlainText() + "\t");
+                // Iterate over the remaining columns, and print each cell value
+                String name = "";
+                double sum = 0;
+                String category = "";
+                for (String tag : row.getCustomElements().getTags()) {
+                    // System.out.print(row.getCustomElements().getValue(tag) + "\t" +"tags:"+tag+"\t");
+                    switch (tag) {
+                        case "название":
+                            name = row.getCustomElements().getValue(tag);
+                            break;
+                        case "приход":
+                            if (row.getCustomElements().getValue(tag) != null)
+                                sum = Double.parseDouble(row.getCustomElements().getValue(tag));
+                            category="приход";
+                            break;
+                        case "расход":
+                            if (sum == 0 && row.getCustomElements().getValue(tag) != null)
+                                sum = (-1) * Double.parseDouble(row.getCustomElements().getValue(tag));
+                            break;
+                        case "категория":
+                            category = row.getCustomElements().getValue(tag);
+                            break;
+                        default:
+                            break;
                     }
-                    else inc=2;
-
                 }
-                else inc = 2;
-                expenses.add(new Expense(name,sum,category,date));
 
-
+             //   System.out.println(name+"\t"+sum+"\t"+category);
+                // если это не пустая строка в данных
+                if (name != null && !name.equals("")) expenses1.add(new Expense(name, sum, category, date));
 
             }
-         //   break;
-
-
-
         }
+        return expenses1;
 
+    }
+
+    private boolean needSkip(String name) {
+        if (name == null)  return false;
+        if (name.trim().equals("наличные")) return true;
+        if (name.trim().equals("карта")) return true;
+        if (name.trim().equals("на карте")) return true;
+        if (name.trim().equals("на спец. счете")) return true;
+        if (name.trim().equals("баланс на карте")) return true;
+        if (name.trim().equals("наличка")) return true;
+        return false;
+    }
+
+
+    public  void setPassword() {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("security.txt"));
+            String USERNAME = br.readLine();
+            String PASSWORD = br.readLine();
+            service.setUserCredentials(USERNAME, PASSWORD);
+        } catch (AuthenticationException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private Date getDate(String dateText) {
@@ -119,10 +138,40 @@ public class Main {
 
         return 0;
     }
-    public void run() throws ServiceException, IOException, URISyntaxException, ParseException {
-        fillExpense();
-        new Report().printExpenses(expenses);
+
+    public void toJson() throws FileNotFoundException {
+        Gson gson = new Gson();
+        String json = gson.toJson(expenses);
+        PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream("json.txt")));
+        pw.println(json);
+        pw.close();
+
     }
+
+    public void init(){
+        if (expenses ==null) expenses = new ArrayList<Expense>();
+        if (service == null) service =   new SpreadsheetService("MySpreadsheetIntegration-v1");
+    }
+
+    public void run() throws ServiceException, IOException, URISyntaxException, ParseException {
+        init();
+    //   new Report().getAllCategories(expenses);
+     //   Calendar calendar= Calendar.getInstance();
+     /*   calendar.set(Calendar.YEAR, 2013);
+        new Report().getAllCategories(expenses,calendar.getTime());
+        calendar.set(Calendar.YEAR, 2014);
+        new Report().getAllCategories(expenses,calendar.getTime());*/
+     //   calendar.set(Calendar.YEAR, 2014);
+      //  new Report().getAllNames(expenses,calendar.getTime());
+        //new Report().printExpenses(expenses);
+     //   toJson();
+
+        expenses = retrievAsList();
+      //  new Report().getAllCategories(expenses);
+
+    }
+
+
 
     public static void main(String[] args)   throws AuthenticationException, MalformedURLException, IOException, ServiceException, URISyntaxException, ParseException {
         new Main().run();
