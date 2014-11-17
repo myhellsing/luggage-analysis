@@ -1,8 +1,7 @@
 package com.company;
 
-import com.google.gdata.client.authn.oauth.*;
-import com.google.gdata.client.spreadsheet.*;
-import com.google.gdata.data.*;
+
+import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.spreadsheet.*;
 import com.google.gdata.util.*;
 import com.google.gson.Gson;
@@ -19,10 +18,8 @@ public class Main {
 
     public static SpreadsheetService service = null;
 
-    public ArrayList<Expense> retrievAsList() throws IOException, ServiceException {
-        ArrayList<Expense> expenses1 = new ArrayList<Expense>();
-        setPassword();
 
+    public List<WorksheetEntry> getAllWorksheets() throws IOException, ServiceException{
         // Define the URL to request.  This should never change.  Получили объект файла Трат
         URL SPREADSHEET_FEED_URL = new URL(
                 "https://spreadsheets.google.com/feeds/spreadsheets/0Aoa5WkgCFdrudEhzcnE0bU83QksteENZS3puSTZJRUE");
@@ -32,7 +29,13 @@ public class Main {
         // Get the first worksheet of the first spreadsheet.  Получили все листы в файле Трат
         WorksheetFeed worksheetFeed = service.getFeed(
                 spreadsheet.getWorksheetFeedUrl(), WorksheetFeed.class);
-        List<WorksheetEntry> worksheets = worksheetFeed.getEntries();
+        return worksheetFeed.getEntries();
+    }
+
+    public ArrayList<Expense> retrievAsList() throws IOException, ServiceException {
+        ArrayList<Expense> expenses1 = new ArrayList<Expense>();
+
+        List<WorksheetEntry> worksheets = getAllWorksheets();
         // пройдемся по всем месяцам
         for (WorksheetEntry worksheet:worksheets) {
             // Fetch the list feed of the worksheet. Получили список строк
@@ -148,13 +151,34 @@ public class Main {
 
     }
 
+
+
     public void init(){
         if (expenses ==null) expenses = new ArrayList<Expense>();
         if (service == null) service =   new SpreadsheetService("MySpreadsheetIntegration-v1");
     }
+    public URL getLastListFeedUrl() throws IOException, ServiceException {
+        return getAllWorksheets().get(0).getListFeedUrl();
+    }
+
+    public void addExpense(String name, double amount, String category )throws IOException, ServiceException {
+
+        // Create a local representation of the new row.
+        ListEntry row = new ListEntry();
+        row.getCustomElements().setValueLocal("название", name);
+        String  debit = (amount >= 0 ? Double.toString(amount):"");
+        String credit = (amount < 0 ? Double.toString(-1*amount):"");
+        row.getCustomElements().setValueLocal("приход", debit);
+        row.getCustomElements().setValueLocal("расход", credit);
+        row.getCustomElements().setValueLocal("категория", category);
+
+        // Send the new row to the API for insertion.
+        row = service.insert(getLastListFeedUrl(), row);
+    }
 
     public void run() throws ServiceException, IOException, URISyntaxException, ParseException {
         init();
+        setPassword();
     //   new Report().getAllCategories(expenses);
      //   Calendar calendar= Calendar.getInstance();
      /*   calendar.set(Calendar.YEAR, 2013);
@@ -166,17 +190,18 @@ public class Main {
         //new Report().printExpenses(expenses);
      //   toJson();
 
-        expenses = retrievAsList();
+   //     expenses = retrievAsList();
       //  new Report().getAllCategories(expenses);
 
+
+        addExpense("Тест прибыль", 150,"Тестовая категория");
+        addExpense("Тест убыль", -150,"Тестовая категория");
     }
 
 
 
     public static void main(String[] args)   throws AuthenticationException, MalformedURLException, IOException, ServiceException, URISyntaxException, ParseException {
         new Main().run();
-
-
 
     }
 }
