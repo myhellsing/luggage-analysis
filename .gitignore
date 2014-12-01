@@ -1,4 +1,3 @@
 security.txt
-.idea/*
-.idea/workspace.xml
-out/*
+.idea/
+out/
